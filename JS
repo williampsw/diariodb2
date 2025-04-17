@@ -1,0 +1,57 @@
+const API_URL = 'https://api.airtable.com/v0/app1UacjicJaDNFg4/tblYU5OQJ80vqzQIT';
+const TOKEN = 'patk8WjkHAV88bzDk.6f9837c5eb4d0e8e9664f67661591bf2d565a9375a80f2118729e499910c6faf';
+
+const headers = {
+  'Authorization': `Bearer ${TOKEN}`,
+  'Content-Type': 'application/json'
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const submitBtn = document.getElementById('submitBtn');
+  const registroInput = document.getElementById('registroInput');
+  const registroList = document.getElementById('registroList');
+
+  fetchRegistros();
+
+  submitBtn.addEventListener('click', () => {
+    const registro = registroInput.value.trim();
+    if (!registro) return;
+
+    const dataHora = new Date().toISOString();
+
+    const payload = {
+      fields: {
+        registro: registro,
+        data_hora: dataHora
+      }
+    };
+
+    fetch(API_URL, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(() => {
+      registroInput.value = '';
+      fetchRegistros();
+    })
+    .catch(err => console.error('Erro ao salvar:', err));
+  });
+
+  function fetchRegistros() {
+    fetch(API_URL + '?sort[0][field]=data_hora&sort[0][direction]=desc', { headers })
+      .then(res => res.json())
+      .then(data => {
+        registroList.innerHTML = '';
+        (data.records || []).forEach(record => {
+          const item = document.createElement('li');
+          item.className = 'list-group-item';
+          const date = new Date(record.fields.data_hora);
+          item.innerHTML = `<strong>${date.toLocaleString()}:</strong><br>${record.fields.registro}`;
+          registroList.appendChild(item);
+        });
+      })
+      .catch(err => console.error('Erro ao buscar:', err));
+  }
+});
